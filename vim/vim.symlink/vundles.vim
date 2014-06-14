@@ -1,8 +1,8 @@
 " Filetype off is required by vundle
 filetype off
 
-set rtp+=~/.vim/bundle/vundle/
-call vundle#rc()
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#start()
 
 " let Vundle manage Vundle required!
 Bundle "gmarik/vundle"
@@ -115,5 +115,6 @@ Bundle "Lokaltog/powerline"
 
 Bundle "nono/vim-handlebars"
 
+call vundle#end()
 "Filetype plugin indent on is required by vundle
 filetype plugin indent on
