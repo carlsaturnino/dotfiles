@@ -119,7 +119,7 @@ install_configfiles () {
 }
 
 init_vundle () {
-  vim +BundleInstall +qall
+  vim +PluginInstall +qall
 }
 
 setup_gitconfig

@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=$HOME/.dotfiles/oh-my-zsh
+export ZSH=$HOME/.dotfiles/zsh/oh-my-zsh.git
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -72,3 +72,5 @@ export PATH="/home/csaturnino/.gvm/pkgsets/go1.2.1/global/bin:/home/csaturnino/.
 
 # ssh
 # export SSH_KEY_PATH="~/.ssh/dsa_id"
+#
+[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
