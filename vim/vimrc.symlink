@@ -71,11 +71,11 @@ endif
 " ================ Indentation ======================
 
 set autoindent
-set smartindent
-set smarttab
+" set smartindent
+" set smarttab
 set nocopyindent
 set shiftwidth=2
-set tabstop=2
+set tabstop=4
 set expandtab
 
 " ================ Completion =======================
@@ -127,3 +127,7 @@ if has('gui_running')
   set transparency=1
   set guifont=Inconsolata\ for\ Powerline:h12
 endif
+
+set rtp+=$HOME/work/dev/src/github.com/golang/lint/misc/vim
+autocmd BufWritePost,FileWritePost *.go execute 'Lint' | cwindow
+

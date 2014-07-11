@@ -22,7 +22,7 @@ Plugin 'gmarik/Vundle.vim'
 " Plugin 'ludovicchabant/vim-lawrencium'
 " Plugin 'majutsushi/tagbar'
 " Plugin 'mhinz/vim-signify'
-" Plugin 'plasticboy/vim-markdown'
+Plugin 'plasticboy/vim-markdown'
 " Plugin 'scrooloose/nerdcommenter'
 Plugin 'scrooloose/nerdtree'
 " Plugin 'sjl/gundo.vim'
@@ -38,11 +38,14 @@ Plugin 'scrooloose/nerdtree'
 Plugin 'tpope/vim-git'
 
 " Cosmetics, color scheme, Powerline...
-" Plugin 'tomasr/molokai'
-" Plugin 'flazz/vim-colorschemes'
-" Plugin 'chrisbra/color_highlight'
+Plugin 'tomasr/molokai'
+Plugin 'flazz/vim-colorschemes'
+Plugin 'chrisbra/color_highlight'
 Plugin 'altercation/vim-colors-solarized'
 
+" Syntax Higlighting
+Plugin 'jnwhiteh/vim-golang'
+Plugin 'fatih/vim-go'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
