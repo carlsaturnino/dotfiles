@@ -2,6 +2,7 @@ if filereadable(expand("~/.vim/vundles.vim"))
   source ~/.vim/vundles.vim
 endif
 
+
 if has("syntax")
   syntax on
 endif
@@ -22,9 +23,9 @@ set autowrite  " Automatically save before commands like :next and :make
 set hidden     " Hide buffers when they are abandoned
 "set mouse=a    " Enable mouse usage (all modes)
 
-set list
+"set list
 "set listchars=eol:$,tab:>-,trail:-
-set listchars=tab:>-,trail:-
+"set listchars=tab:>-,trail:-
 "set spell
 
 "set textwidth=80
@@ -40,7 +41,7 @@ let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabClosePreviewOnPopupClose = 1
 let g:DisableAutoPHPFolding = 1
 let g:ctrlp_root_markers = ['.root']
-let g:syntastic_coffee_coffeelint_args = "--csv -f ~/.vim/coffeelint.config.json"
+"let g:syntastic_coffee_coffeelint_args = "--csv -f ~/.vim/coffeelint.config.json"
 let g:colorizer_auto_filetype="sass,scss,styl,less,css,html"
 
 set nocompatible
@@ -57,7 +58,15 @@ set autoread                    "Reload files changed outside vim
 set nowrap                      "Don't wrap lines
 set linebreak                   "Wrap lines at convenient points
 
-" ================ Persistent Undo ==================
+" Set utf8 as standard encoding and en_US as the standard language
+set encoding=utf8
+
+" Use Unix as the standard file type
+set ffs=unix,dos,mac
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" =>  Persistent Undo
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Keep undo history across sessions, by storing in file.
 " Only works all the time.
 
@@ -68,15 +77,42 @@ if has('persistent_undo')
   set undofile
 endif
 
-" ================ Indentation ======================
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Files, backups and undo
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Turn backup off, since most stuff is in SVN, git et.c anyway...
+" set nobackup
+" set nowb
+set noswapfile
 
-set autoindent
-" set smartindent
-" set smarttab
-set nocopyindent
-set shiftwidth=2
-set tabstop=4
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Text, tab and indent related
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Use spaces instead of tabs
 set expandtab
+
+" Be smart when using tabs ;)
+set smarttab
+
+" 1 tab == 4 spaces
+set shiftwidth=4
+set tabstop=4
+
+" Linebreak on 500 characters
+"set lbr
+"set tw=500
+
+"set ai "Auto indent
+"set si "Smart indent
+"set wrap "Wrap lines
+
+" ================ Indentation ======================
+set autoindent
+set smartindent
+set smarttab
+set nocopyindent
+
 
 " ================ Completion =======================
 
