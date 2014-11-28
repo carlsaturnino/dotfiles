@@ -39,8 +39,9 @@ Plugin 'tpope/vim-git'
 
 " Cosmetics, color scheme, Powerline...
 " Plugin 'tomasr/molokai'
-Plugin 'flazz/vim-colorschemes'
+" Plugin 'flazz/vim-colorschemes'
 " Plugin 'chrisbra/color_highlight'
+Plugin 'chrisbra/color_highlight'
 Plugin 'altercation/vim-colors-solarized'
 
 " Syntax Higlighting
