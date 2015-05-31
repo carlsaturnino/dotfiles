@@ -118,6 +118,15 @@ install_configfiles () {
   done
 }
 
+install_pviotal_tools () {
+  info 'installing pivotal_tools'
+  pivotal-tools/install.sh
+}
+
+install_vimnox() {
+  sudo apt-get -qf install vim-nox
+}
+
 init_vundle () {
   vim +PluginInstall +qall
 }
@@ -136,6 +145,7 @@ fi
 
 install_dotfiles
 install_configfiles
+install_vimnox
 init_vundle
 
 echo ''
