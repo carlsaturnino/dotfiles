@@ -157,9 +157,15 @@ if !has('gui_running')
   augroup END
 endif
 
+" ================ nerdtree =========================
+autocmd vimenter * NERDTree
+
+" ================ neocomplete ======================
+let g:neocomplete#enable_at_startup = 1
+
 " ================ vim-go ===========================
 " disable fmt on save
-let g:go_fmt_autosave = 0
+" let g:go_fmt_autosave = 0
 
 let g:go_highlight_functions = 1
 let g:go_highlight_methods = 1
