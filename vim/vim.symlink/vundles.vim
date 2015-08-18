@@ -13,27 +13,27 @@ Plugin 'gmarik/Vundle.vim'
 " General
 " Plugin 'Valloric/YouCompleteMe'
 Plugin 'Shougo/neocomplete'
-" Plugin 'Shougo/neosnippet'
-" Plugin 'Shougo/neosnippet-snippets'
-" Plugin 'scrooloose/syntastic'
 Plugin 'bling/vim-airline'
-" Plugin 'SirVer/ultisnips'
-" Plugin 'edsono/vim-matchit'
-Plugin 'elzr/vim-json'
-Plugin 'honza/vim-snippets'
-Plugin 'justinmk/vim-sneak'
-" Plugin 'ludovicchabant/vim-lawrencium'
-" Plugin 'majutsushi/tagbar'
-Plugin 'mhinz/vim-signify'
-Plugin 'plasticboy/vim-markdown'
-" Plugin 'scrooloose/nerdcommenter'
-" Plugin 'scrooloose/nerdtree'
-" Plugin 'Xuyuanp/nerdtree-git-plugin'
+Plugin 'vim-scripts/a.vim'
 Plugin 'sjl/gundo.vim'
 Plugin 'tpope/vim-sleuth'
 Plugin 'tpope/vim-surround'
-" Plugin 'tyru/open-browser.vim'
-Plugin 'vim-scripts/a.vim'
+Plugin 'mhinz/vim-signify'
+Plugin 'plasticboy/vim-markdown'
+Plugin 'elzr/vim-json'
+Plugin 'honza/vim-snippets'
+Plugin 'justinmk/vim-sneak'
+
+" Plugin 'SirVer/ultisnips'
+" Plugin 'edsono/vim-matchit'
+" Plugin 'Shougo/neosnippet'
+" Plugin 'Shougo/neosnippet-snippets'
+" Plugin 'scrooloose/syntastic'
+" Plugin 'ludovicchabant/vim-lawrencium'
+" Plugin 'majutsushi/tagbar'
+" Plugin 'scrooloose/nerdcommenter'
+" Plugin 'scrooloose/nerdtree'
+" Plugin 'Xuyuanp/nerdtree-git-plugin'
 
 " Git related...
 Plugin 'gregsexton/gitv'
@@ -43,14 +43,16 @@ Plugin 'tpope/vim-git'
 
 " Cosmetics, color scheme, Powerline...
 Plugin 'tomasr/molokai'
-" Plugin 'flazz/vim-colorschemes'
-" Plugin 'chrisbra/color_highlight'
 Plugin 'chrisbra/color_highlight'
 Plugin 'altercation/vim-colors-solarized'
+" Plugin 'flazz/vim-colorschemes'
+" Plugin 'chrisbra/color_highlight'
 
 " Syntax Higlighting
-" Plugin 'jnwhiteh/vim-golang'
 Plugin 'fatih/vim-go'
+
+" tmux
+Plugin 'christoomey/vim-tmux-navigator'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
