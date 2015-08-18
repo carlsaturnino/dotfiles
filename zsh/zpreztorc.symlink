@@ -84,17 +84,20 @@ zstyle ':prezto:module:editor' keymap 'vi'
 # Auto set to 'off' on dumb terminals.
 #zstyle ':prezto:module:prompt' theme 'joshuarubin'
 #zstyle ':prezto:module:prompt' theme 'sorin'
-zstyle ':prezto:module:prompt' theme 'skwp'
+#zstyle ':prezto:module:prompt' theme 'skwp'
 #zstyle ':prezto:module:prompt' theme 'steeef'
 #zstyle ':prezto:module:prompt' theme 'kylewest'
 #zstyle ':prezto:module:prompt' theme 'jr0cket'
+#zstyle ':prezto:module:prompt' theme 'powerline'
+#zstyle ':prezto:module:prompt' theme 'agnoster'
+zstyle ':prezto:module:prompt' theme 'paradox'
 
 #
 # Screen
 #
 
 # Auto start a session when Zsh is launched.
-# zstyle ':prezto:module:screen' auto-start 'yes'
+zstyle ':prezto:module:screen' auto-start 'yes'
 
 #
 # GPG-Agent

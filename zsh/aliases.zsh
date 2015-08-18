@@ -1,5 +1,10 @@
 alias reload!='. ~/.zshrc'
 
+# convenience aliases for editing configs
+alias ev='vim ~/.vimrc'
+alias et='vim ~/.tmux.conf'
+alias ez='vim ~/.zshrc'
+
 # Global aliases
 alias -g ...='../..'
 alias -g ....='../../..'
