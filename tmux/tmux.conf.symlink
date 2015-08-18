@@ -60,3 +60,7 @@ bind C-a last-window
 set -g history-limit 10000
 
 setw -g aggressive-resize on
+
+set -g utf8
+set-window-option -g utf8 on
+

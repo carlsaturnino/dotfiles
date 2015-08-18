@@ -7,7 +7,7 @@ then
     alias colourify="$GRC -es --colour=auto"
     alias configure='colourify ./configure'
     alias diff='colourify diff'
-    alias make='colourify make'
+    alias make='colourmake'
     alias gcc='colourify gcc'
     alias g++='colourify g++'
     alias as='colourify as'
@@ -17,3 +17,7 @@ then
     alias ping='colourify ping'
     alias traceroute='colourify /usr/sbin/traceroute'
 fi
+
+colourmake() {
+    colourify make "$@"
+}
