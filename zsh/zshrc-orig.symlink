@@ -39,3 +39,7 @@ done
 [[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
 
 unset config_files
+
+if (( $+commands[direnv] )); then
+  eval "$(direnv hook zsh)"
+fi

@@ -14,11 +14,12 @@ var IGNORED_KEYS = map[string]bool{
 	"PS1":             true, // PS1 should not be exported, fixes problem in bash
 
 	// variables that should change freely
-	"OLDPWD": true,
-	"PWD":    true,
-	"SHELL":  true,
-	"SHLVL":  true,
-	"_":      true,
+	"OLDPWD":    true,
+	"PWD":       true,
+	"SHELL":     true,
+	"SHELLOPTS": true,
+	"SHLVL":     true,
+	"_":         true,
 }
 
 type EnvDiff struct {
@@ -112,6 +113,9 @@ func (self *EnvDiff) Serialize() string {
 
 func IgnoredEnv(key string) bool {
 	if strings.HasPrefix(key, "__fish") {
+		return true
+	}
+	if strings.HasPrefix(key, "BASH_FUNC_") {
 		return true
 	}
 	_, found := IGNORED_KEYS[key]

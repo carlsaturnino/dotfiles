@@ -1,6 +1,9 @@
 package main
 
-const STDLIB = "# These are the commands available in an .envrc context\n" +
+const STDLIB = "#!bash\n" +
+	"#\n" +
+	"# These are the commands available in an .envrc context\n" +
+	"#\n" +
 	"set -e\n" +
 	"direnv=\"%s\"\n" +
 	"\n" +
@@ -19,8 +22,30 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#\n" +
 	"log_status() {\n" +
 	"  if [[ -n $DIRENV_LOG_FORMAT ]]; then\n" +
-	"    local msg=\"$@\"\n" +
+	"    local msg=$*\n" +
+	"    # shellcheck disable=SC2059\n" +
 	"    printf \"${DIRENV_LOG_FORMAT}\\n\" \"$msg\" >&2\n" +
+	"  fi\n" +
+	"}\n" +
+	"\n" +
+	"# Usage: log_error [<message> ...]\n" +
+	"#\n" +
+	"# Logs an error message. Acts like echo,\n" +
+	"# but wraps output in the standard direnv log format\n" +
+	"# (controlled by $DIRENV_LOG_FORMAT), and directs it\n" +
+	"# to stderr rather than stdout.\n" +
+	"#\n" +
+	"# Example:\n" +
+	"#\n" +
+	"#    log_error \"Unable to find specified directory!\"\n" +
+	"\n" +
+	"log_error() {\n" +
+	"  local color_normal=`tput sgr0`\n" +
+	"  local color_error=\"\\e[0;31m\"\n" +
+	"  if [[ -n $DIRENV_LOG_FORMAT ]]; then\n" +
+	"    local msg=$*\n" +
+	"    # shellcheck disable=SC2059\n" +
+	"    printf \"${color_error}${DIRENV_LOG_FORMAT}${color_normal}\\n\" \"$msg\" >&2\n" +
 	"  fi\n" +
 	"}\n" +
 	"\n" +
@@ -41,7 +66,7 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"\n" +
 	"# Usage: expand_path <rel_path> [<relative_to>]\n" +
 	"#\n" +
-	"# Outputs the absolute path of <rel_path> relaitve to <relative_to> or the \n" +
+	"# Outputs the absolute path of <rel_path> relative to <relative_to> or the\n" +
 	"# current directory.\n" +
 	"#\n" +
 	"# Example:\n" +
@@ -77,23 +102,23 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#    # output: /usr/local/lib\n" +
 	"#\n" +
 	"user_rel_path() {\n" +
-	"  local path=\"${1#-}\"\n" +
+	"  local abs_path=${1#-}\n" +
 	"\n" +
-	"  if [ -z \"$path\" ]; then return; fi\n" +
+	"  if [[ -z $abs_path ]]; then return; fi\n" +
 	"\n" +
-	"  if [ -n \"$HOME\" ]; then\n" +
-	"    local rel_path=\"${path#$HOME}\"\n" +
-	"    if [ \"$rel_path\" != \"$path\" ]; then\n" +
-	"      path=\"~${rel_path}\"\n" +
+	"  if [[ -n $HOME ]]; then\n" +
+	"    local rel_path=${abs_path#$HOME}\n" +
+	"    if [[ $rel_path != \"$abs_path\" ]]; then\n" +
+	"      abs_path=~$rel_path\n" +
 	"    fi\n" +
 	"  fi\n" +
 	"\n" +
-	"  echo \"$path\"\n" +
+	"  echo \"$abs_path\"\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: find_up <filename>\n" +
 	"#\n" +
-	"# Outputs the path of <filename> when searched from the current directory up to \n" +
+	"# Outputs the path of <filename> when searched from the current directory up to\n" +
 	"# /. Returns 1 if the file has not been found.\n" +
 	"#\n" +
 	"# Example:\n" +
@@ -109,11 +134,11 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"  (\n" +
 	"    cd \"$(pwd -P 2>/dev/null)\"\n" +
 	"    while true; do\n" +
-	"      if [ -f \"$1\" ]; then\n" +
+	"      if [[ -f $1 ]]; then\n" +
 	"        echo \"$PWD/$1\"\n" +
 	"        return 0\n" +
 	"      fi\n" +
-	"      if [ \"$PWD\" = \"/\" ] || [ \"$PWD\" = \"//\" ]; then\n" +
+	"      if [[ $PWD = / ]] || [[ $PWD = // ]]; then\n" +
 	"        return 1\n" +
 	"      fi\n" +
 	"      cd ..\n" +
@@ -125,15 +150,21 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#\n" +
 	"# Loads another \".envrc\" either by specifying its path or filename.\n" +
 	"source_env() {\n" +
-	"  local rcfile=\"$1\"\n" +
-	"  local rcpath=\"${1/#\\~/$HOME}\"\n" +
-	"  if ! [ -f \"$rcpath\" ]; then\n" +
-	"    rcfile=\"$rcfile/.envrc\"\n" +
-	"    rcpath=\"$rcpath/.envrc\"\n" +
+	"  local rcpath=${1/#\\~/$HOME}\n" +
+	"  local rcfile\n" +
+	"  if ! [[ -f $rcpath ]]; then\n" +
+	"    rcpath=$rcpath/.envrc\n" +
 	"  fi\n" +
-	"  log_status \"loading $rcfile\"\n" +
-	"  pushd \"$(dirname \"$rcpath\")\" > /dev/null\n" +
-	"  . \"./$(basename \"$rcpath\")\"\n" +
+	"  rcfile=$(user_rel_path \"$rcpath\")\n" +
+	"  pushd \"$(pwd -P 2>/dev/null)\" > /dev/null\n" +
+	"    pushd \"$(dirname \"$rcpath\")\" > /dev/null\n" +
+	"    if [[ -f ./$(basename \"$rcpath\") ]]; then\n" +
+	"      log_status \"loading $rcfile\"\n" +
+	"      . \"./$(basename \"$rcpath\")\"\n" +
+	"    else\n" +
+	"      log_status \"referenced $rcfile does not exist\"\n" +
+	"    fi\n" +
+	"    popd > /dev/null\n" +
 	"  popd > /dev/null\n" +
 	"}\n" +
 	"\n" +
@@ -142,13 +173,14 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"# Loads another \".envrc\" if found with the find_up command.\n" +
 	"#\n" +
 	"source_up() {\n" +
-	"  local file=\"$1\"\n" +
-	"  if [ -z \"$file\" ]; then\n" +
-	"    file=\".envrc\"\n" +
+	"  local file=$1\n" +
+	"  local dir\n" +
+	"  if [[ -z $file ]]; then\n" +
+	"    file=.envrc\n" +
 	"  fi\n" +
-	"  local path=\"$(cd .. && find_up \"$file\")\"\n" +
-	"  if [ -n \"$path\" ]; then\n" +
-	"    source_env \"$(user_rel_path \"$path\")\"\n" +
+	"  dir=$(cd .. && find_up \"$file\")\n" +
+	"  if [[ -n $dir ]]; then\n" +
+	"    source_env \"$(user_rel_path \"$dir\")\"\n" +
 	"  fi\n" +
 	"}\n" +
 	"\n" +
@@ -161,9 +193,11 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"# the results with direnv_load.\n" +
 	"#\n" +
 	"direnv_load() {\n" +
-	"  exports=\"$(\"$direnv\" apply_dump <(\"$@\"))\"\n" +
-	"  if test \"$?\" -ne 0; then\n" +
-	"    exit 1\n" +
+	"  local exports\n" +
+	"  exports=$(\"$direnv\" apply_dump <(\"$@\"))\n" +
+	"  local es=$?\n" +
+	"  if [[ $es -ne 0 ]]; then\n" +
+	"    return $es\n" +
 	"  fi\n" +
 	"  eval \"$exports\"\n" +
 	"}\n" +
@@ -182,23 +216,25 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#    # output: /home/user/my/project/bin:/usr/bin:/bin\n" +
 	"#\n" +
 	"PATH_add() {\n" +
-	"  export PATH=\"$(expand_path \"$1\"):$PATH\"\n" +
+	"  PATH=$(expand_path \"$1\"):$PATH\n" +
+	"  export PATH\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: path_add <varname> <path>\n" +
 	"#\n" +
 	"# Works like PATH_add except that it's for an arbitrary <varname>.\n" +
 	"path_add() {\n" +
-	"  local old_paths=\"${!1}\"\n" +
-	"  local path=\"$(expand_path \"$2\")\"\n" +
+	"  local old_paths=${!1}\n" +
+	"  local dir\n" +
+	"  dir=$(expand_path \"$2\")\n" +
 	"\n" +
-	"  if [ -z \"$old_paths\" ]; then\n" +
-	"    old_paths=\"$path\"\n" +
+	"  if [[ -z $old_paths ]]; then\n" +
+	"    old_paths=$dir\n" +
 	"  else\n" +
-	"    old_paths=\"$path:$old_paths\"\n" +
+	"    old_paths=$dir:$old_paths\n" +
 	"  fi\n" +
 	"\n" +
-	"  export $1=\"$old_paths\"\n" +
+	"  export $1=$old_paths\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: load_prefix <prefix_path>\n" +
@@ -225,14 +261,15 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#    load_prefix ~/rubies/ruby-1.9.3\n" +
 	"#\n" +
 	"load_prefix() {\n" +
-	"  local path=\"$(expand_path \"$1\")\"\n" +
-	"  path_add CPATH \"$path/include\"\n" +
-	"  path_add LD_LIBRARY_PATH \"$path/lib\"\n" +
-	"  path_add LIBRARY_PATH \"$path/lib\"\n" +
-	"  path_add MANPATH \"$path/man\"\n" +
-	"  path_add MANPATH \"$path/share/man\"\n" +
-	"  path_add PATH \"$path/bin\"\n" +
-	"  path_add PKG_CONFIG_PATH \"$path/lib/pkgconfig\"\n" +
+	"  local dir\n" +
+	"  dir=$(expand_path \"$1\")\n" +
+	"  path_add CPATH \"$dir/include\"\n" +
+	"  path_add LD_LIBRARY_PATH \"$dir/lib\"\n" +
+	"  path_add LIBRARY_PATH \"$dir/lib\"\n" +
+	"  path_add MANPATH \"$dir/man\"\n" +
+	"  path_add MANPATH \"$dir/share/man\"\n" +
+	"  path_add PATH \"$dir/bin\"\n" +
+	"  path_add PKG_CONFIG_PATH \"$dir/lib/pkgconfig\"\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: layout <type>\n" +
@@ -240,7 +277,9 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"# A semantic dispatch used to describe common project layouts.\n" +
 	"#\n" +
 	"layout() {\n" +
-	"  eval \"layout_$1\"\n" +
+	"  local name=$1\n" +
+	"  shift\n" +
+	"  eval \"layout_$name\" \"$@\"\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: layout go\n" +
@@ -265,8 +304,8 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"# See http://search.cpan.org/dist/local-lib/lib/local/lib.pm for more details\n" +
 	"#\n" +
 	"layout_perl() {\n" +
-	"  local libdir=\"$PWD/.direnv/perl5\"\n" +
-	"  export LOCAL_LIB_DIR=\"$libdir\"\n" +
+	"  local libdir=$PWD/.direnv/perl5\n" +
+	"  export LOCAL_LIB_DIR=$libdir\n" +
 	"  export PERL_MB_OPT=\"--install_base '$libdir'\"\n" +
 	"  export PERL_MM_OPT=\"INSTALL_BASE=$libdir\"\n" +
 	"  path_add PERL5LIB \"$libdir/lib/perl5\"\n" +
@@ -274,18 +313,38 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"  PATH_add \"$libdir/bin\"\n" +
 	"}\n" +
 	"\n" +
-	"# Usage: layout python\n" +
+	"# Usage: layout python <python_exe>\n" +
 	"#\n" +
-	"# Creates and loads a virtualenv environment under \"$PWD/.direnv/virtualenv\".\n" +
+	"# Creates and loads a virtualenv environment under\n" +
+	"# \"$PWD/.direnv/python-$python_version\".\n" +
 	"# This forces the installation of any egg into the project's sub-folder.\n" +
 	"#\n" +
+	"# It's possible to specify the python executable if you want to use different\n" +
+	"# versions of python.\n" +
+	"#\n" +
 	"layout_python() {\n" +
-	"  export VIRTUAL_ENV=$PWD/.direnv/virtualenv\n" +
-	"  if ! [ -d \"$VIRTUAL_ENV\" ]; then\n" +
-	"    virtualenv --no-site-packages --distribute \"$VIRTUAL_ENV\"\n" +
+	"  local python=${1:-python}\n" +
+	"  local old_env=$PWD/.direnv/virtualenv\n" +
+	"  unset PYTHONHOME\n" +
+	"  if [[ -d $old_env && $python = python ]]; then\n" +
+	"    export VIRTUAL_ENV=$old_env\n" +
+	"  else\n" +
+	"    local python_version\n" +
+	"    python_version=$(\"$python\" -c \"import platform as p;print(p.python_version())\")\n" +
+	"    export VIRTUAL_ENV=$PWD/.direnv/python-$python_version\n" +
+	"    if [[ ! -d $VIRTUAL_ENV ]]; then\n" +
+	"      virtualenv \"--python=$python\" \"$VIRTUAL_ENV\"\n" +
+	"    fi\n" +
 	"  fi\n" +
-	"  virtualenv --relocatable \"$VIRTUAL_ENV\" >/dev/null\n" +
 	"  PATH_add \"$VIRTUAL_ENV/bin\"\n" +
+	"}\n" +
+	"\n" +
+	"# Usage: layout python3\n" +
+	"#\n" +
+	"# A shortcut for $(layout python python3)\n" +
+	"#\n" +
+	"layout_python3() {\n" +
+	"  layout_python python3\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: layout ruby\n" +
@@ -297,12 +356,13 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#\n" +
 	"layout_ruby() {\n" +
 	"  if ruby -e \"exit Gem::VERSION > '2.2.0'\" 2>/dev/null; then\n" +
-	"    export GEM_HOME=\"$PWD/.direnv/ruby\"\n" +
+	"    export GEM_HOME=$PWD/.direnv/ruby\n" +
 	"  else\n" +
-	"    local ruby_version=\"$(ruby -e\"puts (defined?(RUBY_ENGINE) ? RUBY_ENGINE : 'ruby') + '-' + RUBY_VERSION\")\"\n" +
-	"    export GEM_HOME=\"$PWD/.direnv/ruby-${ruby_version}\"\n" +
+	"    local ruby_version\n" +
+	"    ruby_version=$(ruby -e\"puts (defined?(RUBY_ENGINE) ? RUBY_ENGINE : 'ruby') + '-' + RUBY_VERSION\")\n" +
+	"    export GEM_HOME=$PWD/.direnv/ruby-${ruby_version}\n" +
 	"  fi\n" +
-	"  export BUNDLE_BIN=\"$PWD/.direnv/bin\"\n" +
+	"  export BUNDLE_BIN=$PWD/.direnv/bin\n" +
 	"\n" +
 	"  PATH_add \"$GEM_HOME/bin\"\n" +
 	"  PATH_add \"$BUNDLE_BIN\"\n" +
@@ -322,10 +382,10 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#    # output: Ruby 1.9.3\n" +
 	"#\n" +
 	"use() {\n" +
-	"  local cmd=\"$1\"\n" +
-	"  log_status \"using $@\"\n" +
+	"  local cmd=$1\n" +
+	"  log_status \"using $*\"\n" +
 	"  shift\n" +
-	"  use_$cmd \"$@\"\n" +
+	"  \"use_$cmd\" \"$@\"\n" +
 	"}\n" +
 	"\n" +
 	"# Usage: use rbenv\n" +
@@ -342,9 +402,9 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"#\n" +
 	"rvm() {\n" +
 	"  unset rvm\n" +
-	"  if [ -n \"${rvm_scripts_path:-}\" ]; then\n" +
+	"  if [[ -n ${rvm_scripts_path:-} ]]; then\n" +
 	"    source \"${rvm_scripts_path}/rvm\"\n" +
-	"  elif [ -n \"${rvm_path:-}\" ]; then\n" +
+	"  elif [[ -n ${rvm_path:-} ]]; then\n" +
 	"    source \"${rvm_path}/scripts/rvm\"\n" +
 	"  else\n" +
 	"    source \"$HOME/.rvm/scripts/rvm\"\n" +
@@ -352,7 +412,83 @@ const STDLIB = "# These are the commands available in an .envrc context\n" +
 	"  rvm \"$@\"\n" +
 	"}\n" +
 	"\n" +
+	"# Usage: use node\n" +
+	"# Loads NodeJS version from a `.node-version` or `.nvmrc` file.\n" +
+	"#\n" +
+	"# Usage: use node <version>\n" +
+	"# Loads specified NodeJS version.\n" +
+	"#\n" +
+	"# If you specify a partial NodeJS version (i.e. `4.2`), a fuzzy match\n" +
+	"# is performed and the highest matching version installed is selected.\n" +
+	"#\n" +
+	"# Environment Variables:\n" +
+	"#\n" +
+	"# - $NODE_VERSIONS (required)\n" +
+	"#   You must specify a path to your installed NodeJS versions via the `$NODE_VERSIONS` variable.\n" +
+	"#\n" +
+	"# - $NODE_VERSION_PREFIX (optional) [default=\"node-v\"]\n" +
+	"#   Overrides the default version prefix.\n" +
+	"\n" +
+	"use_node() {\n" +
+	"  local version=$1\n" +
+	"  local via=\"\"\n" +
+	"\n" +
+	"  if [[ -z $NODE_VERSIONS ]] || [[ ! -d $NODE_VERSIONS ]]; then\n" +
+	"    log_error \"You must specify a \\$NODE_VERSIONS environment variable and the directory specified must exist!\"\n" +
+	"    return 1\n" +
+	"  fi\n" +
+	"\n" +
+	"  if [[ -z $version ]] && [[ -f .nvmrc ]]; then\n" +
+	"    version=$(< .nvmrc)\n" +
+	"    via=\".nvmrc\"\n" +
+	"  fi\n" +
+	"\n" +
+	"  if [[ -z $version ]] && [[ -f .node-version ]]; then\n" +
+	"    version=$(< .node-version)\n" +
+	"    via=\".node-version\"\n" +
+	"  fi\n" +
+	"\n" +
+	"  if [[ -z $version ]]; then\n" +
+	"    log_error \"I do not know which NodeJS version to load because one has not been specified!\"\n" +
+	"    return 1\n" +
+	"  fi\n" +
+	"\n" +
+	"  local node_wanted=${NODE_VERSION_PREFIX:-\"node-v\"}$version\n" +
+	"  local node_prefix=$(find $NODE_VERSIONS -maxdepth 1 -mindepth 1 -type d -name \"$node_wanted*\" | sort -r -t . -k 1,1n -k 2,2n -k 3,3n | head -1)\n" +
+	"\n" +
+	"  if [[ ! -d $node_prefix ]]; then\n" +
+	"    log_error \"Unable to find NodeJS version ($version) in ($NODE_VERSIONS)!\"\n" +
+	"    return 1\n" +
+	"  fi\n" +
+	"\n" +
+	"  if [[ ! -x $node_prefix/bin/node ]]; then\n" +
+	"    log_error \"Unable to load NodeJS binary (node) for version ($version) in ($NODE_VERSIONS)!\"\n" +
+	"    return 1\n" +
+	"  fi\n" +
+	"\n" +
+	"  load_prefix $node_prefix\n" +
+	"\n" +
+	"  if [[ -z $via ]]; then\n" +
+	"    log_status \"Successfully loaded NodeJS $(node --version), from prefix ($node_prefix)\"\n" +
+	"  else\n" +
+	"    log_status \"Successfully loaded NodeJS $(node --version) (via $via), from prefix ($node_prefix)\"\n" +
+	"  fi\n" +
+	"}\n" +
+	"\n" +
+	"# Usage: use_nix [...]\n" +
+	"#\n" +
+	"# Load environment variables from `nix-shell`.\n" +
+	"# If you have a `default.nix` or `shell.nix` these will be\n" +
+	"# used by default, but you can also specify packages directly\n" +
+	"# (e.g `use nix -p ocaml`).\n" +
+	"#\n" +
+	"use_nix() {\n" +
+	"  direnv_load nix-shell --show-trace \"$@\" --run 'direnv dump'\n" +
+	"}\n" +
+	"\n" +
 	"## Load the global ~/.direnvrc if present\n" +
-	"if [ -f \"$HOME/.direnvrc\" ]; then\n" +
-	"  source_env \"~/.direnvrc\" >&2\n" +
+	"if [[ -f ${XDG_CONFIG_HOME:-$HOME/.config}/direnv/direnvrc ]]; then\n" +
+	"  source_env \"${XDG_CONFIG_HOME:-$HOME/.config}/direnv/direnvrc\" >&2\n" +
+	"elif [[ -f $HOME/.direnvrc ]]; then\n" +
+	"  source_env \"$HOME/.direnvrc\" >&2\n" +
 	"fi\n"

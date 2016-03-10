@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Outputs a bash script called the *stdlib*. The following commands are included in that script and loaded in the context of an ".envrc". Additionnaly to that, it also loads the file in "~/.direnvrc" if it exists.
+Outputs a bash script called the *stdlib*. The following commands are included in that script and loaded in the context of an ".envrc". In addition, it also loads the file in "~/.direnvrc" if it exists.
 
 STDLIB
 ------
@@ -129,8 +129,15 @@ Example:
     See http://search.cpan.org/dist/local-lib/lib/local/lib.pm for more
     details
 
-* `layout python`:
-    Creates and loads a virtualenv environment under `$PWD/.direnv/virtualenv`. This forces the installation of any egg into the project's sub-folder.
+* `layout python` [*python_exe*]:
+    Creates and loads a virtualenv environment under `$PWD/.direnv/python-$python_version`. This forces the installation of any egg into the project's sub-folder.
+
+    It's possible to specify the python executable if you want to use different versions of python (eg: `layout python python3`).
+
+    Note that previously virtualenv was located under `$PWD/.direnv/virtualenv` and will be re-used by direnv if it exists.
+
+* `layout python3`:
+    A shortcut for `layout python python3`
 
 * `layout ruby`:
     Sets the GEM_HOME environment variable to `$PWD/.direnv/ruby/RUBY_VERSION`. This forces the installation of any gems into the project's sub-folder.
@@ -149,8 +156,40 @@ Example:
 
 * `use rbenv`:
     Loads rbenv which add the ruby wrappers available on the PATH.
+* `use nix [...]`:
+    Load environment variables from `nix-shell`.
+
+    If you have a `default.nix` or `shell.nix` these will be
+    used by default, but you can also specify packages directly
+    (e.g `use nix -p ocaml`).
+
+    See http://nixos.org/nix/manual/#sec-nix-shell
 * `rvm` ...:
     Should work just like in the shell if you have rvm installed.
+
+* `use node`:
+    Loads NodeJS version from a `.node-version` or `.nvmrc` file.
+
+    If you specify a partial NodeJS version (i.e. `4.2`), a fuzzy
+    match is performed and the highest matching version installed
+    is selected.
+
+Example (.envrc):
+
+    set -e
+    use node
+
+Example (.node-version):
+
+    4.2
+
+* `use node` version:
+    Loads specified NodeJS version.
+
+Example (.envrc):
+
+    set -e
+    use node 4.2.2
 
 COPYRIGHT
 ---------

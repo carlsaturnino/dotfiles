@@ -1,4 +1,42 @@
 
+2.7.0 / 2015-08-08
+==================
+
+  * NEW: use_nix() helper to stdlib. Thanks @gfxmonk
+  * FIX: Added SHELLOPTS to ignored vars. Thanks @fernandomora
+  * FIX: Removed shellcheck offenses in the stdlib, better escaping
+  * FIX: typos. Thanks @camelpunch, @oppegard
+
+2.6.1 / 2015-06-23
+==================
+
+  * FIX: source_env handles missing .envrc gracefully. Thanks @gerhard
+  * FIX: Empty variable as unloading in Vim. Thanks @p0deje
+  * FIX: Corrected spelling mistake in deny command. Thanks @neanias
+
+2.6.0 / 2015-02-15
+==================
+
+  * NEW: tcsh is now supported ! Thanks @bbense
+  * CHANGE: `direnv dump` now ignores `BASH_FUNC_` exports. Thanks @gfxmonk
+  * CHANGE: Interactive input during load is now possible. Thanks @toao
+  * FIX: allow workaround for tmux users: `alias tmux='direnv exec / tmux'`
+  * FIX: hardened fish shell escaping thanks to @gfxmonk
+
+Thanks @bbense @vially and @dadooda for corrections in the docs
+
+2.5.0 / 2014-11-04
+==================
+
+  * NEW: Use a different virtualenv per python versions for easier version
+    switching. Eg: ./.direnv/python-${python_version}
+  * NEW: Makes `layout python3` a shortcut for `layout python python3`. Thanks
+    @ghickman !
+  * NEW: Allows to specify which executable of python to use in `layout_python`
+  * CHANGE: `layout python` now unsets $PYTHONHOME to better mimic virtualenv
+  * CHANGE: Don't make virtualenvs relocatable. Fixes #137
+  * OTHER: Use Travis to push release builds to github
+
 2.4.0 / 2014-06-15
 ==================
 

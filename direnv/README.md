@@ -1,15 +1,15 @@
 direnv -- Unclutter your .profile
 =================================
 
-`direnv` is an environment variable manager for your shell. It knows how to
-hook into bash, zsh and fish shell to load or unload environment variables
-depending on your current directory. This allows to have project-specific
+`direnv` is an environment switcher for the shell. It knows how to hook into
+bash, zsh, tcsh and fish shell to load or unload environment variables
+depending on the current directory. This allows to have project-specific
 environment variables and not clutter the "~/.profile" file.
 
 Before each prompt it checks for the existence of an ".envrc" file in the
-current and parent directories. If the file exists, it is loaded into a bash
-sub-shell and all exported variables are then captured by direnv and then made
-available to your shell.
+current and parent directories. If the file exists (and authorized), it is
+loaded into a **bash** sub-shell and all exported variables are then captured by
+direnv and then made available the current shell.
 
 Because direnv is compiled into a single static executable it is fast enough
 to be unnoticeable on each prompt. It is also language agnostic and can be
@@ -44,49 +44,73 @@ nope
 Dependencies: make, golang
 
 ```bash
-git clone http://github.com/zimbatm/direnv
+git clone https://github.com/direnv/direnv
 cd direnv
 make install
-# or symlink ./direnv into your $PATH
+# or symlink ./direnv into the $PATH
 ```
 
 ### Packaged
 
-There's package definitions on Homebrew, Arch's AUR and NixOS's nixpkgs.
+There's package definitions on Homebrew, Arch's AUR, Gentoo go-overlay overlay
+and NixOS's nixpkgs.
 
 Links to binary builds are also available on
-[each release](https://github.com/zimbatm/direnv/releases).
+[each release](https://github.com/direnv/direnv/releases).
 
 ## Setup
 
 For direnv to work properly it needs to be hooked into the shell. Each shell
-has it's own extension mechanism:
+has its own extension mechanism:
 
 ### BASH
 
-Add the following line at the end of your "~/.bashrc" file:
+Add the following line at the end of the "~/.bashrc" file:
 
-`eval "$(direnv hook bash)"`
+```sh
+eval "$(direnv hook bash)"
+```
 
 Make sure it appears even after rvm, git-prompt and other shell extensions
-that manipulate your prompt.
+that manipulate the prompt.
 
 ### ZSH
 
-Add the previous line at the end of you "~/.zshrc" file:
+Add the following line at the end of the "~/.zshrc" file:
 
-`eval "$(direnv hook zsh)"`
+```sh
+eval "$(direnv hook zsh)"
+```
 
 ### FISH
 
-Add the previous line at the end of your "~/.config/fish/config.fish" file:
+Add the following line at the end of the "~/.config/fish/config.fish" file:
 
-`eval (direnv hook fish)`
+```fish
+eval (direnv hook fish)
+```
+
+### TCSH
+
+Add the following line at the end of the "~/.cshrc" file:
+
+```sh
+eval `direnv hook tcsh`
+```
+
 
 ## Usage
 
 In some target folder, create an ".envrc" file and add some export(1)
 directives in it.
+
+Note that the contents of the `.envrc` file must be valid bash syntax,
+despite what shell you may be using.
+This is because direnv always executes the `.envrc` with bash (a sort of
+lowest common denominator of UNIX shells) so that direnv can work across shells.
+If you try to use some syntax that doesn't work in bash (like zsh's
+nested expansions), you will [run into
+trouble](https://github.com/direnv/direnv/issues/199).
 
 On the next prompt you will notice that direnv complains about the ".envrc"
 being blocked. This is the security mechanism to avoid loading new files
@@ -98,7 +122,7 @@ and watch direnv loading your new environment. Note that `direnv edit .` is a
 handy shortcut that opens the file in your $EDITOR and automatically allows it
 if the file's modification time has changed.
 
-Now that the environment is loaded you can notice that once your `cd` out
+Now that the environment is loaded you can notice that once you `cd` out
 of the directory it automatically gets unloaded. If you `cd` back into it it's
 loaded again. That's the base of the mechanism that allows you to build cool
 things.
@@ -124,33 +148,40 @@ It's also possible to create your own extensions by creating a bash file at
 
 Lets say you have the following structure:
 
-- `/a/.envrc`
-- `/a/b/.envrc`
+- "/a/.envrc"
+- "/a/b/.envrc"
 
-If you add the following line in `/a/b/.envrc`, you can load both of the
-`.envrc` when you are in `/a/b`:
+If you add the following line in "/a/b/.envrc", you can load both of the
+".envrc" when you are in `/a/b`:
 
-```
+```sh
 source_env ..
 ```
+
+## Similar projects
+
+* [Environment Modules](http://modules.sourceforge.net/) - one of the oldest (in a good way) environment loading system
+* [autoenv](https://github.com/kennethreitz/autoenv) - lightweight, doesn't support unloads
+* [zsh-autoenv](https://github.com/Tarrasch/zsh-autoenv) - a feature-rich mixture of autoenv and [smartcd](https://github.com/cxreg/smartcd): enter/leave events, nesting, stashing (Zsh-only).
 
 ## Contribute
 
 Bug reports, contributions and forks are welcome.
 
 All bugs or other forms of discussion happen on
-<http://github.com/zimbatm/direnv/issues>
+<http://github.com/direnv/direnv/issues>
 
 There is also a wiki available where you can share your usage patterns or
-other tips and tricks <https://github.com/zimbatm/direnv/wiki>
+other tips and tricks <https://github.com/direnv/direnv/wiki>
 
-Or drop by on the [#direnv channel on FreeNode](irc://#direnv@FreeNode) to
-have a chat.
+Or drop by on
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/direnv/direnv?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+to have a chat.
 
-[![Build Status](https://api.travis-ci.org/zimbatm/direnv.png?branch=master)](http://travis-ci.org/zimbatm/direnv)
+[![Build Status](https://api.travis-ci.org/direnv/direnv.png?branch=master)](http://travis-ci.org/direnv/direnv)
 
 ## COPYRIGHT
 
 Copyright (C) 2014 shared by all
-[contributors](https://github.com/zimbatm/direnv/graphs/contributors) under
+[contributors](https://github.com/direnv/direnv/graphs/contributors) under
 the MIT licence.

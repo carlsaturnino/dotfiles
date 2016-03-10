@@ -16,7 +16,7 @@ DESCRIPTION
 
 `direnv` is an environment variable manager for your shell. It knows how to
 hook into bash, zsh and fish shell to load or unload environment variables
-depending on your current directory. This allows to have project-specific
+depending on your current directory. This allows you to have project-specific
 environment variables and not clutter the "~/.profile" file.
 
 Before each prompt it checks for the existence of an ".envrc" file in the
@@ -67,15 +67,23 @@ that manipulate your prompt.
 
 ### ZSH
 
-Add the previous line at the end of you "~/.zshrc" file:
+Add the following line at the end of your "~/.zshrc" file:
 
 `eval "$(direnv hook zsh)"`
 
 ### FISH
 
-Add the previous line at the end of your "~/.config/fish/config.fish" file:
+Add the following line at the end of your "~/.config/fish/config.fish" file:
 
 `eval (direnv hook fish)`
+
+### TCSH
+
+Add the following line at the end of your "~/.cshrc" file:
+
+    eval `direnv hook tcsh`
+
+
 
 USAGE
 -----
@@ -85,7 +93,7 @@ directives in it.
 
 On the next prompt you will notice that direnv complains about the ".envrc"
 being blocked. This is the security mechanism to avoid loading new files
-automatically. Otherwise and git repo that you pull, or tar archive that you
+automatically. Otherwise any git repo that you pull, or tar archive that you
 unpack, would be able to wipe your hard drive once you `cd` into it.
 
 So here we are pretty sure that it won't do anything bad. Type `direnv allow .`
@@ -93,7 +101,7 @@ and watch direnv loading your new environment. Note that `direnv edit .` is a
 handy shortcut that open the file in your $EDITOR and automatically allows it
 if the file's modification time has changed.
 
-Now that the environment is loaded you can notice that once your `cd` out
+Now that the environment is loaded you can notice that once you `cd` out
 of the directory it automatically gets unloaded. If you `cd` back into it it's
 loaded again. That's the base of the mechanism that allows you to build cool
 things.
@@ -111,10 +119,10 @@ CONTRIBUTE
 Bug reports, contributions and forks are welcome.
 
 All bugs or other forms of discussion happen on
-<http://github.com/zimbatm/direnv/issues>
+<http://github.com/direnv/direnv/issues>
 
 There is also a wiki available where you can share your usage patterns or
-other tips and tricks <https://github.com/zimbatm/direnv/wiki>
+other tips and tricks <https://github.com/direnv/direnv/wiki>
 
 Or drop by on the [#direnv channel on FreeNode](irc://#direnv@FreeNode) to
 have a chat.

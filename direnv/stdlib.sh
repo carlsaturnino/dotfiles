@@ -1,4 +1,7 @@
+#!bash
+#
 # These are the commands available in an .envrc context
+#
 set -e
 direnv="%s"
 
@@ -17,8 +20,30 @@ DIRENV_LOG_FORMAT="${DIRENV_LOG_FORMAT-direnv: %%s}"
 #
 log_status() {
   if [[ -n $DIRENV_LOG_FORMAT ]]; then
-    local msg="$@"
+    local msg=$*
+    # shellcheck disable=SC2059
     printf "${DIRENV_LOG_FORMAT}\n" "$msg" >&2
+  fi
+}
+
+# Usage: log_error [<message> ...]
+#
+# Logs an error message. Acts like echo,
+# but wraps output in the standard direnv log format
+# (controlled by $DIRENV_LOG_FORMAT), and directs it
+# to stderr rather than stdout.
+#
+# Example:
+#
+#    log_error "Unable to find specified directory!"
+
+log_error() {
+  local color_normal=`tput sgr0`
+  local color_error="\e[0;31m"
+  if [[ -n $DIRENV_LOG_FORMAT ]]; then
+    local msg=$*
+    # shellcheck disable=SC2059
+    printf "${color_error}${DIRENV_LOG_FORMAT}${color_normal}\n" "$msg" >&2
   fi
 }
 
@@ -39,7 +64,7 @@ has() {
 
 # Usage: expand_path <rel_path> [<relative_to>]
 #
-# Outputs the absolute path of <rel_path> relaitve to <relative_to> or the 
+# Outputs the absolute path of <rel_path> relative to <relative_to> or the
 # current directory.
 #
 # Example:
@@ -75,23 +100,23 @@ dotenv() {
 #    # output: /usr/local/lib
 #
 user_rel_path() {
-  local path="${1#-}"
+  local abs_path=${1#-}
 
-  if [ -z "$path" ]; then return; fi
+  if [[ -z $abs_path ]]; then return; fi
 
-  if [ -n "$HOME" ]; then
-    local rel_path="${path#$HOME}"
-    if [ "$rel_path" != "$path" ]; then
-      path="~${rel_path}"
+  if [[ -n $HOME ]]; then
+    local rel_path=${abs_path#$HOME}
+    if [[ $rel_path != "$abs_path" ]]; then
+      abs_path=~$rel_path
     fi
   fi
 
-  echo "$path"
+  echo "$abs_path"
 }
 
 # Usage: find_up <filename>
 #
-# Outputs the path of <filename> when searched from the current directory up to 
+# Outputs the path of <filename> when searched from the current directory up to
 # /. Returns 1 if the file has not been found.
 #
 # Example:
@@ -107,11 +132,11 @@ find_up() {
   (
     cd "$(pwd -P 2>/dev/null)"
     while true; do
-      if [ -f "$1" ]; then
+      if [[ -f $1 ]]; then
         echo "$PWD/$1"
         return 0
       fi
-      if [ "$PWD" = "/" ] || [ "$PWD" = "//" ]; then
+      if [[ $PWD = / ]] || [[ $PWD = // ]]; then
         return 1
       fi
       cd ..
@@ -123,15 +148,21 @@ find_up() {
 #
 # Loads another ".envrc" either by specifying its path or filename.
 source_env() {
-  local rcfile="$1"
-  local rcpath="${1/#\~/$HOME}"
-  if ! [ -f "$rcpath" ]; then
-    rcfile="$rcfile/.envrc"
-    rcpath="$rcpath/.envrc"
+  local rcpath=${1/#\~/$HOME}
+  local rcfile
+  if ! [[ -f $rcpath ]]; then
+    rcpath=$rcpath/.envrc
   fi
-  log_status "loading $rcfile"
-  pushd "$(dirname "$rcpath")" > /dev/null
-  . "./$(basename "$rcpath")"
+  rcfile=$(user_rel_path "$rcpath")
+  pushd "$(pwd -P 2>/dev/null)" > /dev/null
+    pushd "$(dirname "$rcpath")" > /dev/null
+    if [[ -f ./$(basename "$rcpath") ]]; then
+      log_status "loading $rcfile"
+      . "./$(basename "$rcpath")"
+    else
+      log_status "referenced $rcfile does not exist"
+    fi
+    popd > /dev/null
   popd > /dev/null
 }
 
@@ -140,13 +171,14 @@ source_env() {
 # Loads another ".envrc" if found with the find_up command.
 #
 source_up() {
-  local file="$1"
-  if [ -z "$file" ]; then
-    file=".envrc"
+  local file=$1
+  local dir
+  if [[ -z $file ]]; then
+    file=.envrc
   fi
-  local path="$(cd .. && find_up "$file")"
-  if [ -n "$path" ]; then
-    source_env "$(user_rel_path "$path")"
+  dir=$(cd .. && find_up "$file")
+  if [[ -n $dir ]]; then
+    source_env "$(user_rel_path "$dir")"
   fi
 }
 
@@ -159,9 +191,11 @@ source_up() {
 # the results with direnv_load.
 #
 direnv_load() {
-  exports="$("$direnv" apply_dump <("$@"))"
-  if test "$?" -ne 0; then
-    exit 1
+  local exports
+  exports=$("$direnv" apply_dump <("$@"))
+  local es=$?
+  if [[ $es -ne 0 ]]; then
+    return $es
   fi
   eval "$exports"
 }
@@ -180,23 +214,25 @@ direnv_load() {
 #    # output: /home/user/my/project/bin:/usr/bin:/bin
 #
 PATH_add() {
-  export PATH="$(expand_path "$1"):$PATH"
+  PATH=$(expand_path "$1"):$PATH
+  export PATH
 }
 
 # Usage: path_add <varname> <path>
 #
 # Works like PATH_add except that it's for an arbitrary <varname>.
 path_add() {
-  local old_paths="${!1}"
-  local path="$(expand_path "$2")"
+  local old_paths=${!1}
+  local dir
+  dir=$(expand_path "$2")
 
-  if [ -z "$old_paths" ]; then
-    old_paths="$path"
+  if [[ -z $old_paths ]]; then
+    old_paths=$dir
   else
-    old_paths="$path:$old_paths"
+    old_paths=$dir:$old_paths
   fi
 
-  export $1="$old_paths"
+  export $1=$old_paths
 }
 
 # Usage: load_prefix <prefix_path>
@@ -223,14 +259,15 @@ path_add() {
 #    load_prefix ~/rubies/ruby-1.9.3
 #
 load_prefix() {
-  local path="$(expand_path "$1")"
-  path_add CPATH "$path/include"
-  path_add LD_LIBRARY_PATH "$path/lib"
-  path_add LIBRARY_PATH "$path/lib"
-  path_add MANPATH "$path/man"
-  path_add MANPATH "$path/share/man"
-  path_add PATH "$path/bin"
-  path_add PKG_CONFIG_PATH "$path/lib/pkgconfig"
+  local dir
+  dir=$(expand_path "$1")
+  path_add CPATH "$dir/include"
+  path_add LD_LIBRARY_PATH "$dir/lib"
+  path_add LIBRARY_PATH "$dir/lib"
+  path_add MANPATH "$dir/man"
+  path_add MANPATH "$dir/share/man"
+  path_add PATH "$dir/bin"
+  path_add PKG_CONFIG_PATH "$dir/lib/pkgconfig"
 }
 
 # Usage: layout <type>
@@ -238,7 +275,9 @@ load_prefix() {
 # A semantic dispatch used to describe common project layouts.
 #
 layout() {
-  eval "layout_$1"
+  local name=$1
+  shift
+  eval "layout_$name" "$@"
 }
 
 # Usage: layout go
@@ -263,8 +302,8 @@ layout_node() {
 # See http://search.cpan.org/dist/local-lib/lib/local/lib.pm for more details
 #
 layout_perl() {
-  local libdir="$PWD/.direnv/perl5"
-  export LOCAL_LIB_DIR="$libdir"
+  local libdir=$PWD/.direnv/perl5
+  export LOCAL_LIB_DIR=$libdir
   export PERL_MB_OPT="--install_base '$libdir'"
   export PERL_MM_OPT="INSTALL_BASE=$libdir"
   path_add PERL5LIB "$libdir/lib/perl5"
@@ -272,18 +311,38 @@ layout_perl() {
   PATH_add "$libdir/bin"
 }
 
-# Usage: layout python
+# Usage: layout python <python_exe>
 #
-# Creates and loads a virtualenv environment under "$PWD/.direnv/virtualenv".
+# Creates and loads a virtualenv environment under
+# "$PWD/.direnv/python-$python_version".
 # This forces the installation of any egg into the project's sub-folder.
 #
+# It's possible to specify the python executable if you want to use different
+# versions of python.
+#
 layout_python() {
-  export VIRTUAL_ENV=$PWD/.direnv/virtualenv
-  if ! [ -d "$VIRTUAL_ENV" ]; then
-    virtualenv --no-site-packages --distribute "$VIRTUAL_ENV"
+  local python=${1:-python}
+  local old_env=$PWD/.direnv/virtualenv
+  unset PYTHONHOME
+  if [[ -d $old_env && $python = python ]]; then
+    export VIRTUAL_ENV=$old_env
+  else
+    local python_version
+    python_version=$("$python" -c "import platform as p;print(p.python_version())")
+    export VIRTUAL_ENV=$PWD/.direnv/python-$python_version
+    if [[ ! -d $VIRTUAL_ENV ]]; then
+      virtualenv "--python=$python" "$VIRTUAL_ENV"
+    fi
   fi
-  virtualenv --relocatable "$VIRTUAL_ENV" >/dev/null
   PATH_add "$VIRTUAL_ENV/bin"
+}
+
+# Usage: layout python3
+#
+# A shortcut for $(layout python python3)
+#
+layout_python3() {
+  layout_python python3
 }
 
 # Usage: layout ruby
@@ -295,12 +354,13 @@ layout_python() {
 #
 layout_ruby() {
   if ruby -e "exit Gem::VERSION > '2.2.0'" 2>/dev/null; then
-    export GEM_HOME="$PWD/.direnv/ruby"
+    export GEM_HOME=$PWD/.direnv/ruby
   else
-    local ruby_version="$(ruby -e"puts (defined?(RUBY_ENGINE) ? RUBY_ENGINE : 'ruby') + '-' + RUBY_VERSION")"
-    export GEM_HOME="$PWD/.direnv/ruby-${ruby_version}"
+    local ruby_version
+    ruby_version=$(ruby -e"puts (defined?(RUBY_ENGINE) ? RUBY_ENGINE : 'ruby') + '-' + RUBY_VERSION")
+    export GEM_HOME=$PWD/.direnv/ruby-${ruby_version}
   fi
-  export BUNDLE_BIN="$PWD/.direnv/bin"
+  export BUNDLE_BIN=$PWD/.direnv/bin
 
   PATH_add "$GEM_HOME/bin"
   PATH_add "$BUNDLE_BIN"
@@ -320,10 +380,10 @@ layout_ruby() {
 #    # output: Ruby 1.9.3
 #
 use() {
-  local cmd="$1"
-  log_status "using $@"
+  local cmd=$1
+  log_status "using $*"
   shift
-  use_$cmd "$@"
+  "use_$cmd" "$@"
 }
 
 # Usage: use rbenv
@@ -340,9 +400,9 @@ use_rbenv() {
 #
 rvm() {
   unset rvm
-  if [ -n "${rvm_scripts_path:-}" ]; then
+  if [[ -n ${rvm_scripts_path:-} ]]; then
     source "${rvm_scripts_path}/rvm"
-  elif [ -n "${rvm_path:-}" ]; then
+  elif [[ -n ${rvm_path:-} ]]; then
     source "${rvm_path}/scripts/rvm"
   else
     source "$HOME/.rvm/scripts/rvm"
@@ -350,7 +410,83 @@ rvm() {
   rvm "$@"
 }
 
+# Usage: use node
+# Loads NodeJS version from a `.node-version` or `.nvmrc` file.
+#
+# Usage: use node <version>
+# Loads specified NodeJS version.
+#
+# If you specify a partial NodeJS version (i.e. `4.2`), a fuzzy match
+# is performed and the highest matching version installed is selected.
+#
+# Environment Variables:
+#
+# - $NODE_VERSIONS (required)
+#   You must specify a path to your installed NodeJS versions via the `$NODE_VERSIONS` variable.
+#
+# - $NODE_VERSION_PREFIX (optional) [default="node-v"]
+#   Overrides the default version prefix.
+
+use_node() {
+  local version=$1
+  local via=""
+
+  if [[ -z $NODE_VERSIONS ]] || [[ ! -d $NODE_VERSIONS ]]; then
+    log_error "You must specify a \$NODE_VERSIONS environment variable and the directory specified must exist!"
+    return 1
+  fi
+
+  if [[ -z $version ]] && [[ -f .nvmrc ]]; then
+    version=$(< .nvmrc)
+    via=".nvmrc"
+  fi
+
+  if [[ -z $version ]] && [[ -f .node-version ]]; then
+    version=$(< .node-version)
+    via=".node-version"
+  fi
+
+  if [[ -z $version ]]; then
+    log_error "I do not know which NodeJS version to load because one has not been specified!"
+    return 1
+  fi
+
+  local node_wanted=${NODE_VERSION_PREFIX:-"node-v"}$version
+  local node_prefix=$(find $NODE_VERSIONS -maxdepth 1 -mindepth 1 -type d -name "$node_wanted*" | sort -r -t . -k 1,1n -k 2,2n -k 3,3n | head -1)
+
+  if [[ ! -d $node_prefix ]]; then
+    log_error "Unable to find NodeJS version ($version) in ($NODE_VERSIONS)!"
+    return 1
+  fi
+
+  if [[ ! -x $node_prefix/bin/node ]]; then
+    log_error "Unable to load NodeJS binary (node) for version ($version) in ($NODE_VERSIONS)!"
+    return 1
+  fi
+
+  load_prefix $node_prefix
+
+  if [[ -z $via ]]; then
+    log_status "Successfully loaded NodeJS $(node --version), from prefix ($node_prefix)"
+  else
+    log_status "Successfully loaded NodeJS $(node --version) (via $via), from prefix ($node_prefix)"
+  fi
+}
+
+# Usage: use_nix [...]
+#
+# Load environment variables from `nix-shell`.
+# If you have a `default.nix` or `shell.nix` these will be
+# used by default, but you can also specify packages directly
+# (e.g `use nix -p ocaml`).
+#
+use_nix() {
+  direnv_load nix-shell --show-trace "$@" --run 'direnv dump'
+}
+
 ## Load the global ~/.direnvrc if present
-if [ -f "$HOME/.direnvrc" ]; then
-  source_env "~/.direnvrc" >&2
+if [[ -f ${XDG_CONFIG_HOME:-$HOME/.config}/direnv/direnvrc ]]; then
+  source_env "${XDG_CONFIG_HOME:-$HOME/.config}/direnv/direnvrc" >&2
+elif [[ -f $HOME/.direnvrc ]]; then
+  source_env "$HOME/.direnvrc" >&2
 fi

@@ -87,6 +87,13 @@ test_start "special-vars"
   unset DIRENV_CONFIG
 test_stop
 
+test_start "dump"
+  direnv_eval
+  test "$LS_COLORS" = "*.ogg=38;5;45:*.wav=38;5;45"
+  test "$THREE_BACKSLASHES" = '\\\'
+  test "$LESSOPEN" = "||/usr/bin/lesspipe.sh %s"
+test_stop
+
 test_start "empty-var"
   direnv_eval
   test "${FOO-unset}" != "unset"
@@ -98,6 +105,10 @@ test_start "empty-var-unset"
   direnv_eval
   test "${FOO-unset}" == "unset"
   unset FOO
+test_stop
+
+test_start "missing-file-source-env"
+  direnv_eval
 test_stop
 
 # Context: foo/bar is a symlink to ../baz. foo/ contains and .envrc file
